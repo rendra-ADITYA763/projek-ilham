@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html class="h-full" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Happy Anniversary Sayang</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Montserrat:ital,wght@0,200;0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap"
+        rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Playfair Display"', 'Georgia', 'serif'],
+                        cormorant: ['"Cormorant Garamond"', 'serif'],
+                        sans: ['"Montserrat"', 'sans-serif'],
+                    },
+                    colors: {
+                        gold: {
+                            100: '#FDFBF7',
+                            200: '#F7F1E5',
+                            300: '#EBDCB9',
+                            400: '#DFB76C',
+                            500: '#C59B4B',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #050507;
+            color: #F8F5EE;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .cinematic-vignette {
+            background: radial-gradient(circle at center, rgba(10, 10, 14, 0.3) 0%, rgba(5, 5, 8, 0.75) 60%, rgba(2, 2, 4, 0.95) 100%);
+        }
+
+        :root {
+            --credits-duration: 90s;
+        }
+
+        @keyframes rollCredits {
+            0% {
+                transform: translateY(105vh);
+                opacity: 0;
+            }
+
+            3% {
+                opacity: 1;
+            }
+
+            92% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+        }
+
+        .animate-credits {
+            animation: rollCredits var(--credits-duration) linear forwards;
+        }
+
+        @keyframes climaxReveal {
+            0% {
+                opacity: 0;
+                transform: scale(0.92) translateY(20px);
+                filter: blur(8px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0px);
+            }
+        }
+
+        .reveal-climax {
+            animation: climaxReveal 3.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .golden-divider {
+            background: linear-gradient(90deg, transparent, rgba(223, 183, 108, 0.6), transparent);
+        }
+    </style>
+</head>
+
+<body class="relative w-full h-full font-sans antialiased bg-black select-none overflow-hidden">
+
+    <!-- 0. LAYAR PEMBUKA (COVER GATE) -->
+    <div id="startScreen"
+        class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/95 backdrop-blur-xl transition-all duration-1000">
+        <p class="font-cormorant italic text-2xl md:text-3xl text-gold-300 font-light mb-8">Untuk Kesayanganku...</p>
+        <button id="startBtn"
+            class="px-8 py-3.5 rounded-full border border-gold-400/50 bg-gold-400/10 hover:bg-gold-400/20 text-gold-200 tracking-widest uppercase text-xs md:text-sm transition-all duration-300 hover:scale-105 shadow-[0_0_30px_rgba(223,183,108,0.15)] cursor-pointer">
+            Buka Surat 🖤
+        </button>
+    </div>
+
+    <!-- 1. FULLSCREEN BACKGROUND VIDEO -->
+    <div class="fixed inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+        <!-- Video tidak di-autoplay di awal, akan di-play lewat JavaScript saat tombol Buka diklik -->
+        <video
+            class="w-full h-full object-cover scale-105 transition-transform duration-1000 ease-out brightness-90 contrast-105"
+            id="bgVideo" loop playsinline>
+            <!-- DI SINI PERUBAHANNYA: Hapus "foto/" karena filenya sejajar -->
+            <source src="video1.mp4" type="video/mp4">
+        </video>
+
+        <div class="absolute inset-0 cinematic-vignette"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-black/80 via-black/45 to-black/85"></div>
+    </div>
+
+    <!-- 2. PARTICLE CANVAS -->
+    <canvas class="fixed inset-0 w-full h-full pointer-events-none z-10 opacity-70" id="particleCanvas" width="1280"
+        height="1024"></canvas>
+
+    <!-- 3. TOP AMBIENT STATUS -->
+    <header
+        class="fixed top-0 inset-x-0 z-30 flex items-center justify-between px-6 py-5 md:px-12 pointer-events-none opacity-100 transition-opacity duration-1000"
+        id="ambientHeader">
+        <div class="flex items-center space-x-3 pointer-events-auto">
+            <span class="inline-block w-2 h-2 rounded-full bg-gold-400 animate-ping"></span>
+            <span class="text-xs uppercase tracking-[0.3em] text-gold-300/80 font-light font-sans">Our Special
+                Anniversary 🖤</span>
+        </div>
+
+        <div class="flex items-center space-x-4 pointer-events-auto text-xs text-gold-200/70">
+            <button
+                class="flex items-center space-x-2 bg-white/5 hover:bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-gold-400/20 transition-all duration-300 opacity-90 hover:opacity-100 cursor-pointer shadow-lg"
+                id="toggleAudioBtn" title="Toggle Sound">
+                <svg class="w-3.5 h-3.5 text-gold-400" fill="none" id="audioIcon" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z">
+                    </path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                </svg>
+                <span class="tracking-widest uppercase text-[10px] font-medium" id="audioLabel">Sound On</span>
+            </button>
+            <button
+                class="hidden sm:inline-flex items-center space-x-1.5 bg-white/5 hover:bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full border border-gold-400/20 transition-colors text-[10px] uppercase tracking-wider text-gold-300/70 cursor-pointer"
+                id="skipToEndBtn" title="Jump straight to ending">
+                <span class="">Fast-Forward</span>
+                <svg class="w-3 h-3 text-gold-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                        d="M4.555 5.168A1 1 0 003 6v8a1 1 0 001.555.832L10 11.202V14a1 1 0 001.555.832l6-4a1 1 0 000-1.664l-6-4A1 1 0 0010 6v2.798L4.555 5.168z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- 4. SURAT BERJALAN -->
+    <main class="fixed inset-0 w-full h-full z-20 overflow-hidden pointer-events-none hidden" id="creditsWrapper">
+        <div class="relative max-w-2xl mx-auto px-6 text-center will-change-transform" id="creditsTrack">
+
+            <div class="mb-14">
+                <p class="font-cormorant italic text-3xl md:text-4xl text-gold-300 font-light mt-32">Happy anniversary
+                    ya sayangggg 🖤</p>
+            </div>
+
+            <div
+                class="space-y-10 text-base md:text-lg text-gold-100/90 font-sans font-light leading-[2.2] max-w-xl mx-auto lowercase">
+                <p>ga kerasa ya kita udah sejauh ini bareng-bareng. makasih udah mau bertahan sama aku yang kadang
+                    nyebelin, suka bikin kesel, dan mungkin lebih cocok jadi pasien sabar daripada pacar WKWKWK.</p>
+                <p>makasihh juga udah hadir di hidup aku, bikin hari-hari aku lebih berwarna, lebih bahagia, dan
+                    tentunya lebih banyak ketawa. walaupun kadang kita berantem gara-gara hal kecil, ngambek nggak
+                    jelas, atau debat tentang siapa yang paling benar (yang jelas aku benar, kamu cuma belum sadar aja
+                    WKWKWK).</p>
+                <p>aku seneng banget bisa punya kamu. kamu bukan cuma pacar aku, tapi juga temen cerita, temen bercanda,
+                    temen saling ganggu, sekaligus orang yang pengen aku ajak buat ngelewatin banyak hal ke depannya.
+                </p>
+                <p>semoga kita bisa terus bareng, makin dewasa, makin saling ngerti, dan makin kuat menghadapi segala
+                    hal. kalo nanti ada masalah, semoga kita selalu milih buat ngobrol baik-baik, bukan malah adu
+                    gengsi. soalnya aku maunya kita adu argumen cuma buat nentuin mau makan apa WKWKW</p>
+                <p>pokoknya, jangan bosen-bosen sama aku yaa. aku emang ga sempurna, tapi kalau soal sayang sama kamu,
+                    insyaallah nggak main-main. kalo soal bikin kamu kesel, itu bonus bawaan pabrik WKWKWK. maaf ya
+                    ucapanya banyak bercandanya.</p>
+                <p>Happy anniversary, cintakuuu 🖤 Makasih udah jadi salah satu alasan aku bahagia. semoga anniversary
+                    kali ini bukan yang terakhir, semoga masih ada banyak tanggal yang bisa kita rayain bareng, sampe
+                    nanti kita udah tua, rambut ubanan🖤</p>
+                <p class="text-sm text-gold-200/60 pt-4">maaf ya sayang aku blm bisa ngasih apa-apa...</p>
+            </div>
+
+            <div class="h-64"></div>
+        </div>
+    </main>
+
+    <!-- 5. THE CLIMAX (Pesan Akhir Menetap) -->
+    <div class="fixed inset-0 z-20 flex items-center justify-center p-6 text-center pointer-events-none hidden"
+        id="climaxScreen">
+        <div
+            class="relative max-w-xl mx-auto px-8 py-14 rounded-3xl bg-black/40 backdrop-blur-xl border border-gold-400/30 shadow-[0_0_90px_rgba(223,183,108,0.15)] reveal-climax pointer-events-auto">
+
+            <p class="text-xs md:text-sm uppercase tracking-[0.45em] text-gold-400 font-medium mb-3">Happy Anniversary
+            </p>
+
+            <h1
+                class="font-serif text-4xl sm:text-5xl md:text-6xl text-gold-100 font-normal tracking-wide drop-shadow-md mb-6 leading-tight">
+                Kesayanganku,<br>
+                <span class="italic text-gold-300 font-cormorant text-5xl sm:text-6xl md:text-7xl">I Love Youuu.</span>
+            </h1>
+
+            <div class="golden-divider h-px w-32 mx-auto my-6"></div>
+
+            <p
+                class="font-sans font-light text-sm md:text-base text-gold-200/80 leading-relaxed max-w-md mx-auto mb-8 lowercase">
+                manusia favorit sekaligus sumber keributan kesayanganku. jangan ke mana-mana yaa, kontrak pacaran kita
+                diperpanjang tanpa batas waktu!
+            </p>
+
+            <button
+                class="inline-flex items-center space-x-2.5 px-6 py-2.5 rounded-full bg-gold-400/10 hover:bg-gold-400/20 border border-gold-400/40 text-gold-200 hover:text-white transition-all duration-300 text-xs tracking-[0.25em] uppercase group cursor-pointer"
+                id="replayBtn">
+                <svg class="w-3.5 h-3.5 text-gold-400 transition-transform duration-500 group-hover:-rotate-180"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                </svg>
+                <span class="">Replay Cinema</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const bgVideo = document.getElementById('bgVideo');
+            const startScreen = document.getElementById('startScreen');
+            const startBtn = document.getElementById('startBtn');
+            const creditsWrapper = document.getElementById('creditsWrapper');
+            const creditsTrack = document.getElementById('creditsTrack');
+            const climaxScreen = document.getElementById('climaxScreen');
+            const replayBtn = document.getElementById('replayBtn');
+            const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+            const audioLabel = document.getElementById('audioLabel');
+            const audioIcon = document.getElementById('audioIcon');
+            const skipToEndBtn = document.getElementById('skipToEndBtn');
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+
+            let isAudioPlaying = true;
+
+            // Particle Engine 
+            let particles = [];
+            const particleCount = 45;
+
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.size = Math.random() * 2 + 0.6;
+                    this.speedY = -(Math.random() * 0.35 + 0.15);
+                    this.speedX = (Math.random() - 0.5) * 0.2;
+                    this.alpha = Math.random() * 0.5 + 0.2;
+                    this.pulseSpeed = Math.random() * 0.015 + 0.005;
+                    this.pulsePhase = Math.random() * Math.PI * 2;
+                }
+                update() {
+                    this.y += this.speedY;
+                    this.x += this.speedX;
+                    this.pulsePhase += this.pulseSpeed;
+                    this.currentAlpha = this.alpha + Math.sin(this.pulsePhase) * 0.2;
+                    if (this.y < -10) this.y = canvas.height + 10;
+                    if (this.x < -10) this.x = canvas.width + 10;
+                    if (this.x > canvas.width + 10) this.x = -10;
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(235, 220, 185, ${Math.max(0.05, this.currentAlpha)})`;
+                    ctx.shadowBlur = 12;
+                    ctx.shadowColor = 'rgba(223, 183, 108, 0.6)';
+                    ctx.fill();
+                }
+            }
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push(new Particle());
+            }
+
+            function animateParticles() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                requestAnimationFrame(animateParticles);
+            }
+            animateParticles();
+
+            // ==========================================
+            // KETIKA TOMBOL "BUKA SURAT" DIKLIK
+            // ==========================================
+            startBtn.addEventListener('click', () => {
+                startScreen.classList.add('opacity-0');
+                setTimeout(() => {
+                    startScreen.classList.add('hidden');
+                }, 1000);
+
+                bgVideo.muted = false;
+                bgVideo.play().catch(e => console.log('Video error:', e));
+
+                creditsWrapper.classList.remove('hidden');
+                creditsTrack.classList.add('animate-credits');
+                creditsTrack.addEventListener('animationend', onCreditsComplete, { once: true });
+
+                updateAudioUI();
+            });
+
+            function onCreditsComplete() {
+                creditsWrapper.classList.add('hidden');
+                climaxScreen.classList.remove('hidden');
+            }
+
+            function fastForwardToEnding() {
+                creditsTrack.classList.remove('animate-credits');
+                onCreditsComplete();
+            }
+
+            function replayExperience() {
+                climaxScreen.classList.add('hidden');
+                creditsWrapper.classList.remove('hidden');
+                creditsTrack.classList.remove('animate-credits');
+                void creditsTrack.offsetWidth;
+                creditsTrack.classList.add('animate-credits');
+                creditsTrack.addEventListener('animationend', onCreditsComplete, { once: true });
+            }
+
+            function toggleAudio() {
+                if (isAudioPlaying) {
+                    bgVideo.muted = true;
+                    isAudioPlaying = false;
+                } else {
+                    bgVideo.muted = false;
+                    isAudioPlaying = true;
+                }
+                updateAudioUI();
+            }
+
+            function updateAudioUI() {
+                if (isAudioPlaying) {
+                    audioLabel.textContent = 'Audio Playing';
+                    audioIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />`;
+                    toggleAudioBtn.classList.remove('opacity-60');
+                    toggleAudioBtn.classList.add('border-gold-400/50');
+                } else {
+                    audioLabel.textContent = 'Muted';
+                    audioIcon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2" />`;
+                    toggleAudioBtn.classList.remove('border-gold-400/50');
+                    toggleAudioBtn.classList.add('opacity-90');
+                }
+            }
+
+            replayBtn.addEventListener('click', replayExperience);
+            toggleAudioBtn.addEventListener('click', toggleAudio);
+            if (skipToEndBtn) skipToEndBtn.addEventListener('click', fastForwardToEnding);
+        });
+    </script>
+</body>
+
+</html>
